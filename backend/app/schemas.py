@@ -33,7 +33,9 @@ from app.models import RoomType, UserRole
 class UserCreate(SQLModel):
     # EmailStr rejects "not-an-email" before your code ever runs.
     email: EmailStr
-    password: str = Field(min_length=8)
+    # max 72: bcrypt hashes at most 72 bytes, so document the ceiling here
+    # rather than silently truncating a 200-character password.
+    password: str = Field(min_length=8, max_length=72)
     full_name: str = Field(min_length=1)
     role: UserRole = UserRole.guest  # guest unless they pick host at signup
 
