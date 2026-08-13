@@ -19,7 +19,7 @@ from datetime import date, datetime, timezone
 from enum import Enum
 from typing import Optional
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, and_
 
 
 def utc_now() -> datetime:
@@ -244,3 +244,33 @@ class Review(SQLModel, table=True):
     listing: Optional[Listing] = Relationship(back_populates="reviews")
     author: Optional[User] = Relationship(back_populates="reviews")
     booking: Optional[Booking] = Relationship(back_populates="review")
+
+
+# ---------------------------------------------------------------------------
+# The overlap rule — THE core booking logic, defined exactly once.
+#
+# Three callers need it: the search filter (hide booked listings), the
+# availability endpoint (grey out dates), and booking creation (reject a
+# double-booking). If each wrote its own version, one of them would drift and
+# you'd sell the same room twice.
+# ---------------------------------------------------------------------------
+
+def booking_overlap_clause(check_in: date, check_out: date):
+    """SQL for "an existing booking collides with [check_in, check_out)".
+
+        existing.check_in < new.check_out  AND  existing.check_out > new.check_in
+
+    Both comparisons are strict (`<`, `>`) because the range is half-open: the
+    old guest checks out on the morning the new guest checks in, so
+    existing.check_out == new.check_in is NOT a conflict — it's a turnover day.
+    Using <= / >= here would block every back-to-back booking.
+
+    Cancelled bookings free their dates, so they're excluded.
+
+    Returns a SQLAlchemy boolean expression to drop into any .where().
+    """
+    return and_(
+        Booking.check_in < check_out,
+        Booking.check_out > check_in,
+        Booking.status == BookingStatus.confirmed,
+    )
