@@ -14,7 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import create_db_and_tables
-from app.routers import auth, bookings, listings
+from app.routers import auth, bookings, listings, reviews, users, wishlist
 
 
 @asynccontextmanager
@@ -48,6 +48,9 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(listings.router)
 app.include_router(bookings.router)
+app.include_router(reviews.router)
+app.include_router(wishlist.router)
+app.include_router(users.router)
 
 
 @app.get("/", tags=["meta"])

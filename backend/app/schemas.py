@@ -265,7 +265,9 @@ class ReviewCreate(SQLModel):
     location_rating: int = Field(ge=1, le=5)
     value: int = Field(ge=1, le=5)
     comment: str = Field(min_length=1)
-    booking_id: Optional[int] = None  # ties the review to a specific stay
+    # No booking_id here on purpose: the server works out WHICH completed stay
+    # this review belongs to. A client that picks its own booking_id could
+    # attach a review to someone else's stay.
 
 
 class ReviewRead(SQLModel):
