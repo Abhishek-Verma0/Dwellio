@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   DESIGN TOKENS — "Warm Editorial"
+
+   Tailwind v4 (what Next 16 installs) moved theme config OUT of
+   tailwind.config.js and INTO this CSS block. Every variable declared under
+   @theme becomes a real utility class:
+
+     --color-coral   ->  bg-coral  text-coral  border-coral
+     --radius-card   ->  rounded-card
+     --shadow-lift   ->  shadow-lift
+     --font-display  ->  font-display
+
+   So this file IS the theme config. One source of truth, no JS.
+--------------------------------------------------------------------------- */
+
+@theme {
+  /* Palette. Coral is the ONLY accent — CTAs, active states, the wishlist
+     heart. Everything else is ink on sand. Restraint is the whole point. */
+  --color-ink: #12233a; /* headlines, body text, the anchor colour */
+  --color-coral: #f0576b; /* the one accent */
+  --color-coral-deep: #d63f54; /* hover/pressed state for coral surfaces */
+  --color-sand: #f7f4ef; /* page background */
+  --color-paper: #ffffff; /* cards, inputs, sheets */
+  --color-slate: #6b7a8d; /* secondary text, meta, captions */
+  --color-line: #e6e1d8; /* borders, dividers, image placeholders */
+  --color-success: #2e7d6f; /* confirmations, "booked" states */
+
+  /* Type. Two families, two jobs: Fraunces speaks, Inter works. */
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  /* Modular scale (~1.25). Display sizes are deliberately far from body
+     sizes — the gap between 16px and 56px is what reads as "editorial". */
+  --text-eyebrow: 0.6875rem; /* 11px — uppercase micro-labels */
+  --text-eyebrow--line-height: 1;
+  --text-eyebrow--letter-spacing: 0.14em;
+  --text-meta: 0.8125rem; /* 13px */
+  --text-meta--line-height: 1.4;
+  --text-body: 1rem; /* 16px */
+  --text-body--line-height: 1.65;
+  --text-lead: 1.125rem; /* 18px */
+  --text-lead--line-height: 1.6;
+  --text-price: 1.75rem; /* 28px — the card's typographic statement */
+  --text-price--line-height: 1;
+  --text-title: 1.5rem; /* 24px — card headline */
+  --text-title--line-height: 1.25;
+  --text-h2: 2rem; /* 32px */
+  --text-h2--line-height: 1.2;
+  --text-h1: 2.75rem; /* 44px */
+  --text-h1--line-height: 1.1;
+  --text-display: 3.75rem; /* 60px — one per page, maximum */
+  --text-display--line-height: 1.02;
+
+  /* Radius: 12px cards, 8px inputs. */
+  --radius-card: 12px;
+  --radius-input: 8px;
+
+  /* Shadows are WARM — tinted with the ink navy, never neutral black, so they
+     sit on sand without looking grey. Two layers: a tight contact shadow plus
+     a wide soft one. */
+  --shadow-warm: 0 1px 2px rgba(18, 35, 58, 0.04), 0 8px 24px -12px rgba(18, 35, 58, 0.1);
+  --shadow-lift: 0 2px 4px rgba(18, 35, 58, 0.05), 0 20px 40px -18px rgba(18, 35, 58, 0.2);
+
+  /* One easing curve everywhere, so every motion in the app feels related.
+     A gentle decelerate — fast out of the gate, soft landing. */
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-sand);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    /* Slightly tightened tracking on body copy pairs better with Fraunces. */
+    letter-spacing: -0.006em;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Fraunces is a variable font with an optical-size axis: at display sizes it
+     sharpens the serifs and tightens spacing automatically. */
+  .font-display {
+    font-variation-settings: "SOFT" 0, "WONK" 1;
+    letter-spacing: -0.02em;
+  }
+
+  /* Visible keyboard focus everywhere, on the accent colour. Only for keyboard
+     users (:focus-visible), so mouse clicks stay clean. */
+  :focus-visible {
+    outline: 2px solid var(--color-coral);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* Numbers in prices/dates line up in columns instead of jittering. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Anyone who asked their OS to reduce motion gets none of it. Framer Motion is
+   handled separately by <MotionConfig reducedMotion="user"> in layout.tsx;
+   this covers plain CSS transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
