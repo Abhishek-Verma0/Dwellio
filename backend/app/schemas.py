@@ -183,6 +183,18 @@ class ListingDetail(ListingCard):
     amenities: list[AmenityRead] = []
 
 
+class FiltersRead(SQLModel):
+    """Everything the filter row needs to render itself, in one request.
+
+    Without this the frontend would have to hardcode the amenity list and the
+    property types — and drift the moment a host invents a new one.
+    """
+    amenities: list[AmenityRead]
+    property_types: list[str]
+    price_min: float
+    price_max: float
+
+
 class ListingPage(SQLModel):
     """Paginated list response. Returning `total` lets the frontend render
     "1–20 of 137" and know when to stop fetching."""

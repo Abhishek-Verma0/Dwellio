@@ -28,6 +28,7 @@ from app.models import (
 )
 from app.schemas import (
     AvailabilityRead,
+    FiltersRead,
     ListingCard,
     ListingCreate,
     ListingDetail,
@@ -179,6 +180,27 @@ def search_listings(
 # "mine" is not an int, so /listings/mine would 422 against /listings/{id:int}
 # if that came first. Classic Express gotcha too.
 # ---------------------------------------------------------------------------
+
+@router.get("/filters", response_model=FiltersRead)
+def get_filter_options(session: SessionDep):
+    """What the filter row can filter BY — read from the data, not hardcoded.
+
+    Also declared before /{listing_id} for the same reason as /mine.
+    """
+    prices = session.exec(select(Listing.price_per_night).where(Listing.is_active == True)).all()  # noqa: E712
+    property_types = session.exec(
+        select(Listing.property_type).where(Listing.is_active == True).distinct()  # noqa: E712
+    ).all()
+
+    return FiltersRead(
+        amenities=session.exec(select(Amenity).order_by(col(Amenity.name))).all(),
+        property_types=sorted(property_types),
+        # Fall back to 0 when there are no listings, so the price slider still
+        # has usable bounds on an empty database.
+        price_min=min(prices, default=0),
+        price_max=max(prices, default=0),
+    )
+
 
 @router.get("/mine", response_model=list[ListingDetail])
 def my_listings(session: SessionDep, host: HostUser):
