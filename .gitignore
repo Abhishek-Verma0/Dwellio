@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# SQLite database (regenerate with seed.py)
+*.db
+*.db-journal
+
+# Secrets
+.env
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Next.js frontend (added later)
+node_modules/
+.next/
+
+
+air.pdf
+.claude
