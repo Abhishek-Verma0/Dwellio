@@ -26,10 +26,14 @@ import type {
   UserRole,
 } from "@/types";
 
-// render.yaml injects the API's address as a bare hostname (`dwellio-api.onrender.com`),
-// so fill in the scheme when it's missing. Locally the default already carries one.
-const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-const BASE_URL = RAW_BASE_URL.startsWith("http") ? RAW_BASE_URL : `https://${RAW_BASE_URL}`;
+// Two callers, two answers. In the browser everything goes through "/api", which
+// next.config.ts rewrites to uvicorn — same origin, no CORS, and nothing to
+// configure at build time. Server components run *inside* the container, so they
+// skip the proxy and hit loopback directly. Setting NEXT_PUBLIC_API_URL overrides
+// both, which is what a split frontend/backend deploy would need.
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ??
+  (typeof window === "undefined" ? "http://127.0.0.1:8000" : "/api");
 
 /** Query-string builder that drops empty values, so `?city=&guests=` never happens. */
 function query(params: Record<string, string | number | boolean | undefined | null | number[]>) {

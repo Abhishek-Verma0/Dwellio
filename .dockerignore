@@ -1,0 +1,7 @@
+# COPY runs after the installs, so without these your Windows node_modules and
+# .venv would clobber the Linux ones the image just built.
+**/node_modules
+**/.venv
+**/*.db
+**/.env
+.git

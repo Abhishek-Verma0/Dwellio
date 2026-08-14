@@ -47,17 +47,16 @@ app = FastAPI(
 # The browser blocks cross-origin requests unless the server opts in. The Next.js
 # dev server is a DIFFERENT origin (localhost:3000 vs localhost:8000), so without
 # this every fetch from the frontend fails with a CORS error.
-# ponytail: explicit origins, not allow_origins=["*"] — the wildcard is
-# incompatible with credentials. FRONTEND_ORIGINS is a comma-separated list; the
-# deployed origin is injected by render.yaml as a bare hostname, hence the https://
-# fill-in, and the default keeps `clone && run` working with no env set.
+# ponytail: deployed, this middleware does nothing — Next proxies /api on the same
+# origin, so the browser never makes a cross-origin request. It stays for the case
+# where the frontend is pointed straight at this API (NEXT_PUBLIC_API_URL set, or a
+# split two-service deploy), where dropping it would break every fetch.
+# FRONTEND_ORIGINS is a comma-separated list; never allow_origins=["*"], which is
+# incompatible with credentials anyway.
 _origins = os.getenv("FRONTEND_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        o if o.startswith("http") else f"https://{o}"
-        for o in (o.strip() for o in _origins.split(",")) if o
-    ],
+    allow_origins=[o.strip() for o in _origins.split(",") if o.strip()],
     allow_credentials=True,
     allow_methods=["*"],   # GET, POST, PATCH, DELETE, OPTIONS...
     allow_headers=["*"],   # notably Authorization and Content-Type

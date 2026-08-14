@@ -1,43 +1,17 @@
-# Render Blueprint — both services, one file, one deploy.
+# Render Blueprint — ONE web service running both halves.
 #
 #   Render dashboard -> New -> Blueprint -> pick this repo -> Apply
 #
-# The two `fromService` blocks are the point: each service is handed the other's
-# hostname automatically, so there are no URLs to copy between dashboards and no
-# ordering problem. `property: host` yields a bare hostname (no scheme) — the app
-# code fills in https:// on both sides.
+# Everything is in the Dockerfile, so there is no start command, no root
+# directory, and no URLs to wire between services. One URL, one cold start.
 services:
   - type: web
-    name: dwellio-api
-    runtime: python
+    name: dwellio
+    runtime: docker
     plan: free
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /
+    dockerfilePath: ./Dockerfile
     envVars:
-      - key: PYTHON_VERSION
-        value: "3.12"
+      # The only value you must not hardcode. Render generates it once and keeps
+      # it stable across deploys, so existing tokens survive a redeploy.
       - key: SECRET_KEY
-        generateValue: true   # Render invents a strong one; never in the repo
-      - key: FRONTEND_ORIGINS
-        fromService:
-          name: dwellio-web
-          type: web
-          property: host
-
-  - type: web
-    name: dwellio-web
-    runtime: node
-    plan: free
-    rootDir: frontend
-    buildCommand: npm ci && npm run build
-    startCommand: npm start   # `next start` binds $PORT on its own
-    envVars:
-      - key: NODE_VERSION
-        value: "22"
-      - key: NEXT_PUBLIC_API_URL
-        fromService:
-          name: dwellio-api
-          type: web
-          property: host
+        generateValue: true
