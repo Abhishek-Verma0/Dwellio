@@ -26,7 +26,10 @@ import type {
   UserRole,
 } from "@/types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// render.yaml injects the API's address as a bare hostname (`dwellio-api.onrender.com`),
+// so fill in the scheme when it's missing. Locally the default already carries one.
+const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const BASE_URL = RAW_BASE_URL.startsWith("http") ? RAW_BASE_URL : `https://${RAW_BASE_URL}`;
 
 /** Query-string builder that drops empty values, so `?city=&guests=` never happens. */
 function query(params: Record<string, string | number | boolean | undefined | null | number[]>) {

@@ -8,12 +8,15 @@ The app entrypoint — this is your Express `app.js`.
 Run it with:  uvicorn app.main:app --reload
 """
 
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import Session, select
 
-from app.database import create_db_and_tables
+from app.database import create_db_and_tables, engine
+from app.models import User
 from app.routers import auth, bookings, listings, reviews, users, wishlist
 
 
@@ -22,6 +25,15 @@ async def lifespan(app: FastAPI):
     """Startup/shutdown hook. Code before `yield` runs once when the server
     boots, code after runs on shutdown. Here: make sure the tables exist."""
     create_db_and_tables()
+    # ponytail: Render's free tier has no persistent disk, so dwellio.db is gone
+    # after every deploy and the demo would come up empty. Reseed only when there
+    # is no user at all — a database with data in it is never touched. Attach a
+    # disk (paid) and this branch simply stops firing.
+    with Session(engine) as session:
+        if session.exec(select(User)).first() is None:
+            from app.seed import seed  # imported here: seed() is startup-only
+
+            seed()
     yield
 
 
@@ -35,11 +47,17 @@ app = FastAPI(
 # The browser blocks cross-origin requests unless the server opts in. The Next.js
 # dev server is a DIFFERENT origin (localhost:3000 vs localhost:8000), so without
 # this every fetch from the frontend fails with a CORS error.
-# ponytail: explicit localhost origins, not allow_origins=["*"] — the wildcard is
-# incompatible with credentials and would need changing before deploy anyway.
+# ponytail: explicit origins, not allow_origins=["*"] — the wildcard is
+# incompatible with credentials. FRONTEND_ORIGINS is a comma-separated list; the
+# deployed origin is injected by render.yaml as a bare hostname, hence the https://
+# fill-in, and the default keeps `clone && run` working with no env set.
+_origins = os.getenv("FRONTEND_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        o if o.startswith("http") else f"https://{o}"
+        for o in (o.strip() for o in _origins.split(",")) if o
+    ],
     allow_credentials=True,
     allow_methods=["*"],   # GET, POST, PATCH, DELETE, OPTIONS...
     allow_headers=["*"],   # notably Authorization and Content-Type
